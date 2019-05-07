@@ -8,8 +8,8 @@ BUILD	?= release
 #the prefix to install the library into
 PREFIX	?= /usr/local
 
-# build HID support by default
-USE_HID ?= 1
+# Turn off HID Support for OpenWRT
+USE_HID ?= 0
 
 #the System we are building on
 UNAME  := $(shell uname -s)
@@ -76,7 +76,7 @@ CXX    := $(CROSS_COMPILE)g++
 LD     := $(CROSS_COMPILE)g++
 endif
 ifeq ($(UNAME),Darwin)
-AR     := libtool -static -o 
+AR     := libtool -static -o
 RANLIB := ranlib
 else
 AR     := $(CROSS_COMPILE)ar rc
@@ -98,8 +98,8 @@ CPPFLAGS += $(DEBUG_CPPFLAGS)
 LDFLAGS	+= $(DEBUG_LDFLAGS)
 endif
 
-#if /lib64 exists, then setup x86_64 library path to lib64 (good indication if a linux has /lib and lib64). 
-#Else, if it doesnt, then set as /lib. This is used in the make install target 
+#if /lib64 exists, then setup x86_64 library path to lib64 (good indication if a linux has /lib and lib64).
+#Else, if it doesnt, then set as /lib. This is used in the make install target
 ifeq ($(wildcard /lib64),)
 instlibdir.x86_64 = /lib/
 else
@@ -126,7 +126,7 @@ sysconfdir := $(PREFIX)/etc/openzwave/
 includedir := $(PREFIX)/include/openzwave/
 docdir := $(PREFIX)/share/doc/openzwave-$(VERSION).$(VERSION_REV)
 else
-sysconfdir ?= $(PREFIX)/etc/openzwave/
+sysconfdir ?= /etc/openzwave/
 includedir ?= $(PREFIX)/include/openzwave/
 docdir ?= $(PREFIX)/share/doc/openzwave-$(VERSION).$(VERSION_REV)
 endif
@@ -155,7 +155,7 @@ $(OBJDIR)/%.o : %.cpp
 
 
 $(OBJDIR)/%.o : %.c
-	@echo "Building $(notdir $@)"	
+	@echo "Building $(notdir $@)"
 	@$(CC) -MM $(CFLAGS) $(INCLUDES) $< > $(DEPDIR)/$*.d
 	@mv -f $(DEPDIR)/$*.d $(DEPDIR)/$*.d.tmp
 	@$(SED) -e 's|.*:|$(OBJDIR)/$*.o: $(DEPDIR)/$*.d|' < $(DEPDIR)/$*.d.tmp > $(DEPDIR)/$*.d;
