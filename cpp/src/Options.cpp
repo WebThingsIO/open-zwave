@@ -51,7 +51,10 @@ Options* Options::Create
 	string const& _commandLine
 )
 {
-
+  printf("Options::Create called\n");
+  printf("_configPath = %s\n", _configPath.c_str());
+  printf("_userPath = %s\n", _userPath.c_str());
+  printf("_commandLine = %s\n", _commandLine.c_str());
 	if( s_instance == NULL )
 	{
 		string configPath = _configPath;
@@ -70,28 +73,35 @@ Options* Options::Create
 		FileOps::Create();
 		if( !FileOps::FolderExists( configPath ) )
 		{
+      printf("Options::Create - creating Log\n");
 			Log::Create( "", false, true, LogLevel_Debug, LogLevel_Debug, LogLevel_None );
 			/* Try some default directories */
 			if ( FileOps::FolderExists( "config/" ) )
 			{
+        printf("Options::Create - Using config/\n");
 				Log::Write( LogLevel_Error, "Cannot find a path to the configuration files at %s, Using config/ instead...", configPath.c_str() );
 				configPath = "config/";
 			} else if (FileOps::FolderExists("/etc/openzwave/" ) )
 			{
+        printf("Options::Create - Using /etc/openzwave/\n");
 				Log::Write( LogLevel_Error, "Cannot find a path to the configuration files at %s, Using /etc/openzwave/ instead...", configPath.c_str() );
 				configPath = "/etc/openzwave/";
 #ifdef SYSCONFDIR
 			} else if ( FileOps::FolderExists(SYSCONFDIR ) )
 			{
+        printf("Options::Create - Using %s/\n", SYSCONFDIR);
 				Log::Write( LogLevel_Error, "Cannot find a path to the configuration files at %s, Using %s instead...", configPath.c_str(), SYSCONFDIR);
 				configPath = SYSCONFDIR;
 #endif
 			} else {
+        printf("Options::Create - Unable to locate config files\n");
 				Log::Write( LogLevel_Error, "Cannot find a path to the configuration files at %s. Exiting...", configPath.c_str() );
 				OZW_FATAL_ERROR(OZWException::OZWEXCEPTION_CONFIG, "Cannot Find Configuration Files");
 				return NULL;
 			}
-		}
+		} else {
+      printf("Options::Create - taking else\n");
+    }
 		FileOps::Destroy();
 		s_instance = new Options( configPath, userPath, _commandLine );
 
@@ -394,7 +404,7 @@ bool Options::Lock
 				Log::Write( LogLevel_Info, "\t%s: Invalid Type");
 				break;
 		}
-	}	
+	}
 	return true;
 }
 

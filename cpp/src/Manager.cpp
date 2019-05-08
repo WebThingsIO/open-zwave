@@ -318,6 +318,7 @@ bool Manager::AddDriver
 		Driver::ControllerInterface const& _interface
 )
 {
+  printf("Manager::AddDriver called\n");
 	// Make sure we don't already have a driver for this controller
 
 	// Search the pending list
@@ -3384,9 +3385,9 @@ bool Manager::GetBitMask
 // Gets the size of a BitMask (1, 2 or 4)
 //-----------------------------------------------------------------------------
 bool Manager::GetBitSetSize
-( 
-	ValueID const& _id, 
-	uint8* o_size 
+(
+	ValueID const& _id,
+	uint8* o_size
 )
 {
 	bool res = false;

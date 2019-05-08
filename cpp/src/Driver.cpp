@@ -397,10 +397,12 @@ void Driver::Start
 (
 )
 {
+  printf("Driver::Start called\n");
 	// Start the thread that will handle communications with the Z-Wave network
 	m_driverThread->Start( Driver::DriverThreadEntryPoint, this );
 	m_dnsThread->Start ( DNSThread::DNSThreadEntryPoint, m_dns);
   m_timerThread->Start( TimerThread::TimerThreadEntryPoint, m_timer );
+  printf("Returning from Driver::Start\n");
 }
 
 //-----------------------------------------------------------------------------
@@ -430,6 +432,8 @@ void Driver::DriverThreadProc
 )
 {
 #define WAITOBJECTCOUNT 11
+
+  printf("Driver::DriverThreadProc called\n");
 
 	uint32 attempts = 0;
 	bool mfsisReady = false;
