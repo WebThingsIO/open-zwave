@@ -1,7 +1,14 @@
 ![Open-ZWave Library](https://github.com/OpenZWave/open-zwave-web/raw/master/gfx/OZW_SF.png)
 ==================
 
-*Last Updated: 4 October 2019*
+*Last Updated: 17 November 2022*
+
+* * *
+
+## NOTICE: This project is no longer being maintained. :warning:
+openzwave has no more maintainers, are there any motivated to continue the development of the library?
+
+## Introduction
 
 Our goal is to create free software library that interfaces with Z-Wave controllers, allowing anyone to create applications to control devices on a Z-Wave network, without requiring in-depth knowledge of the Z-Wave protocol. OpenZWave is not about creating Z-Wave devices (nodes). The project consists of the main library, written in C++ and wrappers and supporting projects, to interface different languages and protocol(s).
 
@@ -102,6 +109,8 @@ Become a financial contributor and help us sustain our community. [[Contribute](
 
 <a href="https://opencollective.com/ozw"><img src="https://opencollective.com/ozw/individuals.svg?width=890"></a>
 
+(We also have many users that support us via Github Sponsors program!)
+
 #### Organizations
 
 Support this project with your organization. Your logo will show up here with a link to your website. [[Contribute](https://opencollective.com/ozw/contribute)]
@@ -116,3 +125,13 @@ Support this project with your organization. Your logo will show up here with a 
 <a href="https://opencollective.com/ozw/organization/7/website"><img src="https://opencollective.com/ozw/organization/7/avatar.svg"></a>
 <a href="https://opencollective.com/ozw/organization/8/website"><img src="https://opencollective.com/ozw/organization/8/avatar.svg"></a>
 <a href="https://opencollective.com/ozw/organization/9/website"><img src="https://opencollective.com/ozw/organization/9/avatar.svg"></a>
+
+### Sponsors
+
+The Following Organisations Sponsor OpenZWave Development by donating hardware for testing and support
+
+<a href="https://www.aeotec.com/"><img height="47px" width="152px" src="https://aeotec.com/images/aeotec-logo.svg"></a>
+
+<a href="https://qubino.com/"><img height="47px" width="152px" src="https://qubino.com/wp-content/uploads/2019/02/qubino_logo.png"></a>
+
+<a href="https://www.heatit.com/"><img height="47px" width="152px" src="http://utvikling.thermofloor.no/TFWP/wp-content/uploads/2017/07/Heatit_Controls_RGB.png"></a>

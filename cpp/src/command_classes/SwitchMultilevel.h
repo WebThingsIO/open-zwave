@@ -72,15 +72,14 @@ namespace OpenZWave
 						return StaticGetCommandClassName();
 					}
 					virtual bool HandleMsg(uint8 const* _data, uint32 const _length, uint32 const _instance = 1) override;
-					virtual bool HandleIncomingMsg(uint8 const* _data, uint32 const _length, uint32 const _instance = 1) override;
 					virtual bool SetValue(Internal::VC::Value const& _value) override;
 					virtual void SetValueBasic(uint8 const _instance, uint8 const _value) override;
-					virtual void SetVersion(uint8 const _version) override;
 
 					virtual uint8 GetMaxVersion() override
 					{
 						return 4;
 					}
+					virtual void SupervisionSessionSuccess(uint8 _session_id, uint32 const _instance);
 
 				protected:
 					virtual void CreateVars(uint8 const _instance) override;

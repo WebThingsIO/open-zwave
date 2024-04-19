@@ -82,18 +82,16 @@ namespace OpenZWave
 					{
 						return 3;
 					}
+					virtual void SupervisionSessionSuccess(uint8 _session_id, uint32 const _instance);
 
 				protected:
 					virtual void CreateVars(uint8 const _instance) override;
 
 				private:
-					ThermostatMode(uint32 const _homeId, uint8 const _nodeId) :
-							CommandClass(_homeId, _nodeId)
-					{
-						SetStaticRequest(StaticRequest_Values);
-					}
+					ThermostatMode(uint32 const _homeId, uint8 const _nodeId);
 
 					vector<Internal::VC::ValueList::Item> m_supportedModes;
+					uint32 m_currentMode; 
 			};
 		} // namespace CC
 	} // namespace Internal

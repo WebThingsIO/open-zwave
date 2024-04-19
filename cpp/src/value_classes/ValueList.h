@@ -66,6 +66,10 @@ namespace OpenZWave
 					bool SetByValue(int32 const _value);
 
 					void OnValueRefreshed(int32 const _valueIdx);
+					void ConfirmNewValue()
+					{
+						OnValueRefreshed(m_items[m_newValue].m_value);
+					};
 
 					// From Value
 					virtual string const GetAsString() const
@@ -76,6 +80,8 @@ namespace OpenZWave
 					{
 						return SetByLabel(_value);
 					}
+					void SetTargetValue(int32 const _target, uint32 _duration = 0);
+
 					virtual void ReadXML(uint32 const _homeId, uint8 const _nodeId, uint8 const _commandClassId, TiXmlElement const* _valueElement);
 					virtual void WriteXML(TiXmlElement* _valueElement);
 
@@ -96,7 +102,10 @@ namespace OpenZWave
 					vector<Item> m_items;
 					int32 m_valueIdx;					// the current index in the m_items vector
 					int32 m_valueIdxCheck;			// the previous index in the m_items vector (used for double-checking spurious value reads)
+					int32 m_newValue;			// a new index to be set on the appropriate device (used by Supervision CC)
 					uint8 m_size;
+					int32 m_targetValue; 		// the Target Value, if the CC support it
+
 			};
 		} // namespace VC
 	} // namespace Internal

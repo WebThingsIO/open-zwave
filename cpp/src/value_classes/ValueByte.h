@@ -55,6 +55,11 @@ namespace OpenZWave
 
 					bool Set(uint8 const _value);
 					void OnValueRefreshed(uint8 const _value);
+					void ConfirmNewValue()
+					{
+						OnValueRefreshed(m_newValue);
+					};
+					void SetTargetValue(uint8 const _target, uint32 _duration = 0);
 
 					// From Value
 					virtual string const GetAsString() const;
@@ -70,6 +75,8 @@ namespace OpenZWave
 				private:
 					uint8 m_value;				// the current value
 					uint8 m_valueCheck;			// the previous value (used for double-checking spurious value reads)
+					uint8 m_targetValue; 		// the Target Value, if the CC support it
+					uint8 m_newValue;			// a new value to be set on the device (used by Supervision CC)
 			};
 		} // namespace VC
 	} // namespace Internal

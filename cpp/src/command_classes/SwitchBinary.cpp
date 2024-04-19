@@ -30,6 +30,7 @@
 #include "command_classes/CommandClasses.h"
 #include "command_classes/SwitchBinary.h"
 #include "command_classes/WakeUp.h"
+#include "command_classes/Supervision.h"
 #include "Defs.h"
 #include "Msg.h"
 #include "Driver.h"
@@ -37,7 +38,7 @@
 #include "platform/Log.h"
 
 #include "value_classes/ValueBool.h"
-#include "value_classes/ValueByte.h"
+#include "value_classes/ValueInt.h"
 
 namespace OpenZWave
 {
@@ -61,7 +62,7 @@ namespace OpenZWave
 			{
 				if (_requestFlags & RequestFlag_Dynamic)
 				{
-					return RequestValue(_requestFlags, 0, _instance, _queue);
+					return RequestValue(_requestFlags, ValueID_Index_SwitchBinary::Level, _instance, _queue);
 				}
 
 				return false;
@@ -107,6 +108,8 @@ namespace OpenZWave
 					// data[1] => Switch state
 					if (Internal::VC::ValueBool* value = static_cast<Internal::VC::ValueBool*>(GetValue(_instance, ValueID_Index_SwitchBinary::Level)))
 					{
+						if (GetVersion() >= 2 && _length >= 4)
+							value->SetTargetValue(_data[2] != 0, _data[3]);
 						value->OnValueRefreshed(_data[1] != 0);
 						value->Release();
 					}
@@ -124,9 +127,9 @@ namespace OpenZWave
 						// data[3] might be duration
 						if (_length > 3)
 						{
-							if (Internal::VC::ValueByte* value = static_cast<Internal::VC::ValueByte*>(GetValue(_instance, ValueID_Index_SwitchBinary::Duration)))
+							if (Internal::VC::ValueInt* value = static_cast<Internal::VC::ValueInt*>(GetValue(_instance, ValueID_Index_SwitchBinary::Duration)))
 							{
-								value->OnValueRefreshed(_data[3]);
+								value->OnValueRefreshed(decodeDuration(_data[3]));
 								value->Release();
 							}
 						}
@@ -136,6 +139,29 @@ namespace OpenZWave
 				}
 
 				return false;
+			}
+			
+			void SwitchBinary::SupervisionSessionSuccess(uint8 _session_id, uint32 const _instance)
+			{
+				if (Node* node = GetNodeUnsafe())
+				{			
+					uint32 index = node->GetSupervisionIndex(_session_id);
+
+					if (index != Internal::CC::Supervision::StaticNoIndex())
+					{
+						if (Internal::VC::ValueBool* value = static_cast<Internal::VC::ValueBool*>(GetValue(_instance, index)))
+						{
+							value->ConfirmNewValue();
+
+							Log::Write(LogLevel_Info, GetNodeId(), "Confirmed switch binary index %d to value=%s",
+								index, value->GetValue() ? "On" : "Off");
+						}
+					}
+					else
+					{
+						Log::Write(LogLevel_Info, GetNodeId(), "Ignore unknown supervision session %d", _session_id);
+					}
+				}
 			}
 
 //-----------------------------------------------------------------------------
@@ -160,9 +186,9 @@ namespace OpenZWave
 					}
 					case ValueID_Index_SwitchBinary::Duration:
 					{
-						if (Internal::VC::ValueByte* value = static_cast<Internal::VC::ValueByte*>(GetValue(instance, ValueID_Index_SwitchBinary::Duration)))
+						if (Internal::VC::ValueInt* value = static_cast<Internal::VC::ValueInt*>(GetValue(instance, ValueID_Index_SwitchBinary::Duration)))
 						{
-							value->OnValueRefreshed((static_cast<Internal::VC::ValueByte const*>(&_value))->GetValue());
+							value->OnValueRefreshed((static_cast<Internal::VC::ValueInt const*>(&_value))->GetValue());
 							value->Release();
 						}
 						res = true;
@@ -210,47 +236,54 @@ namespace OpenZWave
 			{
 				uint8 const nodeId = GetNodeId();
 				uint8 const targetValue = _state ? 0xff : 0;
-
-				Log::Write(LogLevel_Info, nodeId, "SwitchBinary::Set - Setting to %s", _state ? "On" : "Off");
-				Msg* msg = new Msg("SwitchBinaryCmd_Set", nodeId, REQUEST, FUNC_ID_ZW_SEND_DATA, true);
-				msg->SetInstance(this, _instance);
-				msg->Append(nodeId);
-
-				if (GetVersion() >= 2)
+				
+				if (Node* node = GetNodeUnsafe())
 				{
-					Internal::VC::ValueByte* durationValue = static_cast<Internal::VC::ValueByte*>(GetValue(_instance, ValueID_Index_SwitchBinary::Duration));
-					uint8 duration = durationValue->GetValue();
-					durationValue->Release();
-					if (duration == 0xff)
+					//add supervision encapsulation if supported
+					uint8 index = ValueID_Index_SwitchBinary::Level;
+					uint8 supervision_session_id = node->CreateSupervisionSession(StaticGetCommandClassId(), index);
+					if (supervision_session_id == Internal::CC::Supervision::StaticNoSessionId())
 					{
-						Log::Write(LogLevel_Info, GetNodeId(), "  Duration: Default");
+						Log::Write(LogLevel_Debug, GetNodeId(), "Supervision not supported, fall back to setpoint set/get");
 					}
-					else if (duration >= 0x80)
+
+					Log::Write(LogLevel_Info, nodeId, "SwitchBinary::Set - Setting to %s", _state ? "On" : "Off");
+					Msg* msg = new Msg("SwitchBinaryCmd_Set", nodeId, REQUEST, FUNC_ID_ZW_SEND_DATA, true);
+					msg->SetInstance(this, _instance);
+					msg->SetSupervision(supervision_session_id);
+					msg->Append(nodeId);
+
+					if (GetVersion() >= 2)
 					{
-						Log::Write(LogLevel_Info, GetNodeId(), "  Duration: %d minutes", duration - 0x7f);
+						Internal::VC::ValueInt* durationValue = static_cast<Internal::VC::ValueInt*>(GetValue(_instance, ValueID_Index_SwitchBinary::Duration));
+						uint32 duration = durationValue->GetValue();
+						durationValue->Release();
+						if (duration > 7620)
+							Log::Write(LogLevel_Info, GetNodeId(), "  Duration: Device Default");
+						else if (duration > 0x7F)
+							Log::Write(LogLevel_Info, GetNodeId(), "  Rouding to %d Minutes (over 127 seconds)", encodeDuration(duration)-0x79);
+						else 
+							Log::Write(LogLevel_Info, GetNodeId(), "  Duration: %d seconds", duration);
+
+						msg->Append(4);
+						msg->Append(GetCommandClassId());
+						msg->Append(SwitchBinaryCmd_Set);
+						msg->Append(targetValue);
+						msg->Append(encodeDuration(duration));
 					}
 					else
 					{
-						Log::Write(LogLevel_Info, GetNodeId(), "  Duration: %d seconds", duration);
+						msg->Append(3);
+						msg->Append(GetCommandClassId());
+						msg->Append(SwitchBinaryCmd_Set);
+						msg->Append(targetValue);
 					}
 
-					msg->Append(4);
-					msg->Append(GetCommandClassId());
-					msg->Append(SwitchBinaryCmd_Set);
-					msg->Append(targetValue);
-					msg->Append(duration);
+					msg->Append(GetDriver()->GetTransmitOptions());
+					GetDriver()->SendMsg(msg, Driver::MsgQueue_Send);
+					return true;
 				}
-				else
-				{
-					msg->Append(3);
-					msg->Append(GetCommandClassId());
-					msg->Append(SwitchBinaryCmd_Set);
-					msg->Append(targetValue);
-				}
-
-				msg->Append(GetDriver()->GetTransmitOptions());
-				GetDriver()->SendMsg(msg, Driver::MsgQueue_Send);
-				return true;
+				return false;
 			}
 
 //-----------------------------------------------------------------------------
@@ -263,7 +296,7 @@ namespace OpenZWave
 				{
 					if (GetVersion() >= 2)
 					{
-						node->CreateValueByte(ValueID::ValueGenre_System, GetCommandClassId(), _instance, ValueID_Index_SwitchBinary::Duration, "Transition Duration", "", false, false, 0xff, 0);
+						node->CreateValueInt(ValueID::ValueGenre_System, GetCommandClassId(), _instance, ValueID_Index_SwitchBinary::Duration, "Transition Duration", "Sec", false, false, -1, 0);
 						node->CreateValueBool(ValueID::ValueGenre_System, GetCommandClassId(), _instance, ValueID_Index_SwitchBinary::TargetState, "Target State", "", true, false, true, 0);
 					}
 					node->CreateValueBool(ValueID::ValueGenre_User, GetCommandClassId(), _instance, ValueID_Index_SwitchBinary::Level, "Switch", "", false, false, false, 0);
