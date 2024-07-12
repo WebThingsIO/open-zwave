@@ -19,6 +19,9 @@ export PREFIX
 UNAME := $(shell uname)
 export UNAME
 
+# Support both 4K & 16K pages for Raspberry Pi 5
+LDFLAGS += "-Wl,-z,max-page-size=16384"
+
 all: 
 	@LDFLAGS="$(LDFLAGS)" CPPFLAGS="$(CPPFLAGS)" $(MAKE) -C $(top_srcdir)/cpp/build/ -$(MAKEFLAGS)
 	@LDFLAGS="$(LDFLAGS)" CPPFLAGS="$(CPPFLAGS)" $(MAKE) -C $(top_srcdir)/cpp/examples/MinOZW/ -$(MAKEFLAGS)
